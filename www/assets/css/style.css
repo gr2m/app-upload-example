@@ -1,0 +1,66 @@
+html {
+  background-color: #eee;
+
+  font: 16px/24px normal Helvetica, Arial;
+  position: relative;
+}
+html, body {
+  min-height: 100%;
+}
+body:before {
+  position: fixed;
+  display: block;
+  top: 50%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 600px;
+  line-height: 0;
+  color: #ccc;
+  z-index: 1;
+}
+
+#images {
+  padding: 50px;
+  position: relative;
+  z-index: 2;
+}
+#images li {
+  width: 300px;
+  height: 300px;
+  float: left;
+  margin: 50;
+  border: 10px solid #fff;
+  border-bottom-width: 50px;
+  border-radius: 2px;
+  box-shadow: 1px 1px 7px #000;
+}
+.signed-in, .signed-out {
+  display: none;
+}
+.signed-out form {
+  width: 400px;
+  margin: -200px 0 0 -200px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+}
+.signed-out form label {
+  float: left;
+  clear: left;
+  width: 100px;
+  padding: .3em 0;
+  margin: 0 0 1em;
+}
+.signed-out form input {
+  float: left;
+  font: inherit;
+  width: 300px;
+}
+.signed-out button {
+  display: block;
+  clear: left;
+  font: inherit;
+  margin-left: 102px;
+}

@@ -1,0 +1,163 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>File API</title>
+
+    <link rel="stylesheet" href="assets/vendor/icomoon96743/style.css" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  
+  <body class="icon-droplet">
+    <div class="signed-out">
+      <form>
+        <h1> Sign up / Sign in </h1>
+        <label>email</label>
+        <input type="email" name="email" >
+        <label>password</label>
+        <input type="password" name="password" >
+        <button>submit</button>
+      </form>
+    </div>
+    <div class="signed-in">
+      <span class="account-bar">signed in as <span class="username">?</span> (<a href="#" class="sign-out">sign out</a>)</span>
+      <ul id="images">
+      </ul>
+    </div>
+    
+    <script src="/assets/vendor/jquery/jquery-1.9.1.js"></script>
+    <script src="/assets/vendor/hoodie/hoodie.js"></script>
+    <script>
+
+      $(document).ready( function() {
+        window.hoodie = new Hoodie();
+        hoodie.account.authenticate()
+        .done( showMyStuff )
+        .fail( showLogin )
+      })
+
+        // auth form events
+        $('.signed-out form').on( 'submit', function(event) {
+          event.preventDefault()
+
+          var email     = $(this).find('input[name=email]').val()
+          var password  = $(this).find('input[name=password]').val()
+
+          signInOrSignUp(email, password)
+        });
+
+        function signInOrSignUp (email, password) {
+          hoodie.account.signIn(email, password)
+          .done( showMyStuff )
+          .fail( function() {
+            hoodie.account.signUp(email, password)
+            .done( showMyStuff )
+            .fail( function() {
+              alert('oops, something went wrong, buddy! Maybe try again?')
+            });
+          });
+        }
+
+        function showLogin () {
+          $('.signed-in').hide()
+          $('.signed-out').show()
+        }
+
+        function showMyStuff () {
+          $('.signed-in').show()
+          $('.signed-out').hide()
+          initDropzone()
+          updateAccountBar()
+        }
+        function initDropzone() {
+          if (typeof window.FileReader === 'undefined') {
+            alert('Sorry, File API & FileReader not available.')
+            return
+          }
+          
+          var holder  = $('html')[0],
+              $images = $('#images');
+
+          function addNewImage(object, url) {
+            if (!url) {
+              url = hoodie.baseUrl + '/' + encodeURIComponent(hoodie.account.db()) + '/image%2f' + object.id + '/' + object.name
+            }
+              
+            var css = 'url('+url+') no-repeat center';
+            var new_li = "<li style=\"background: " + css + "; \"></li>";
+            $images.append(new_li)
+          }
+
+          hoodie.store.findAll( function(obj) {
+            return obj.type == 'image'
+          }).done( function(images) {
+            for (var i = images.length - 1; i >= 0; i--) {
+              addNewImage(images[i])
+            };
+          });
+
+
+          holder.ondragover = function () { this.className = 'hover'; return false; };
+          holder.ondragend  =  function () { this.className = ''; return false; };
+          holder.ondrop     = function (e) {
+
+            this.className = '';
+            e.preventDefault();
+
+            console.log('e.dataTransfer.files')
+            console.log(e.dataTransfer.files)
+
+            var files  = e.dataTransfer.files;
+
+            var loadFile = function(file) {
+              var reader = new FileReader();
+
+              reader.onload = function (event) {
+                console.log('event.target', event.target);
+                console.log('file', file)
+
+                var image_object = {
+                  name: file.name,
+                  size: file.size,
+                  type: 'image',
+                  id  : hoodie.uuid(7)
+                }
+                
+                var _attachments = {}
+                _attachments[file.name] = {
+                  content_type: file.type,
+                  data: event.target.result.substr(13 + file.type.length)
+                }
+                addNewImage(image_object, event.target.result)
+                
+                window.p = hoodie.store.save(image_object.type, image_object.id, image_object)
+                .done( function(object) {
+                  debugger
+                  object._attachments = _attachments
+                  var promise = hoodie.remote.push([object])
+                  promise.done( function() { console.log('pushed', arguments )})
+                  promise.fail( function() { console.log('not pushed', arguments )})
+                });
+              };
+
+              console.log('file',file);
+              reader.readAsDataURL(file);
+            };
+
+            for (var i = files.length - 1, file; i >= 0; i--) {
+              file = files[i];
+              loadFile(file);
+            };
+          }
+        }
+
+        function updateAccountBar () {
+          $accountBar = $('.account-bar')
+          $accountBar.find('.username').text( hoodie.account.username )
+          $accountBar.find('.sign-out').unbind().on('click', function() {
+            hoodie.account.signOut()
+            .done( showLogin ) 
+          })
+        }
+      </script>
+  </body>
+</html>
