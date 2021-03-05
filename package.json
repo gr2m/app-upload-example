@@ -8,5 +8,6 @@
   },
   "scripts": {
     "start": "node node_modules/hoodie-app/lib/hoodie-app.js"
-  }
+  },
+  "repository": "github:gr2m/app-upload-example"
 }
